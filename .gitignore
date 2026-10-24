@@ -2,3 +2,4 @@ node_modules/
 save.json
 .env
 *.log
+.layero/

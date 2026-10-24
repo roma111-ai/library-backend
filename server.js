@@ -32,9 +32,11 @@ app.use(express.json({ limit: "10mb" }));
 
 // Подключение к PostgreSQL (Neon)
 const { Pool } = pg;
+const DATABASE_URL = process.env.DATABASE_URL || "postgresql://neondb_owner:npg_NFKnVa4SJ1Zy@ep-green-rain-b9nok8be-pooler.c-7.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { require: true },
+  connectionString: DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
 });
 
 // Создаём таблицу при старте (если её нет)
