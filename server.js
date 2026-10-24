@@ -30,6 +30,8 @@ app.use(cors({
 
 app.use(express.json({ limit: "10mb" }));
 
+const SECRET_TOKEN = "20122008";
+
 // Подключение к PostgreSQL (Neon)
 const { Pool } = pg;
 const DATABASE_URL = process.env.DATABASE_URL || "postgresql://neondb_owner:npg_NFKnVa4SJ1Zy@ep-green-rain-b9nok8be-pooler.c-7.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
@@ -78,23 +80,31 @@ app.get("/api/save", async (req, res) => {
 // POST /api/save — пишет в БД
 app.post("/api/save", async (req, res) => {
   try {
+    // Проверка пароля
+    const token = req.headers["x-save-token"];
+    if (token !== SECRET_TOKEN) {
+      return res.status(403).json({ error: "Доступ запрещён. Неверный пароль." });
+    }
+
     const world = req.body;
 
     if (!world || typeof world !== "object" || Object.keys(world).length === 0) {
       return res.status(400).json({ error: "Пустое или невалидное тело запроса" });
     }
 
+    const jsonString = JSON.stringify(world);
+
     await pool.query(
       `INSERT INTO saves (id, data, updated_at)
-       VALUES (1, $1, NOW())
-       ON CONFLICT (id) DO UPDATE SET data = $1, updated_at = NOW()`,
-      [world]
+       VALUES (1, $1::jsonb, NOW())
+       ON CONFLICT (id) DO UPDATE SET data = $1::jsonb, updated_at = NOW()`,
+      [jsonString]
     );
 
     res.json({
       status: "ok",
       savedAt: new Date().toISOString(),
-      size: JSON.stringify(world).length,
+      size: jsonString.length,
     });
   } catch (err) {
     console.error("Ошибка записи в БД:", err);
