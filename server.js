@@ -63,8 +63,14 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
 
-// GET /api/save — читает из БД
+// GET /api/save — читает из БД (с проверкой пароля)
 app.get("/api/save", async (req, res) => {
+  // Проверка пароля
+  const token = req.headers["x-save-token"];
+  if (token !== SECRET_TOKEN) {
+    return res.status(403).json({ error: "Доступ запрещён. Неверный пароль." });
+  }
+
   try {
     const result = await pool.query("SELECT data FROM saves WHERE id = 1");
     if (result.rows.length === 0) {
@@ -77,7 +83,7 @@ app.get("/api/save", async (req, res) => {
   }
 });
 
-// POST /api/save — пишет в БД
+// POST /api/save — пишет в БД (с проверкой пароля)
 app.post("/api/save", async (req, res) => {
   try {
     // Проверка пароля
